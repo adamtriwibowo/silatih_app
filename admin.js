@@ -775,8 +775,8 @@ async function showPesertaPerPelatihan(id, judul, icon) {
 }
 
 function renderPesertaModal() {
-  const q   = (document.getElementById('searchPesertaModal')?.value  || '').toLowerCase();
-  const st  =  document.getElementById('filterStatusPeserta')?.value || '';
+  const q  = (document.getElementById('searchPesertaModal')?.value  || '').toLowerCase();
+  const st =  document.getElementById('filterStatusPeserta')?.value || '';
 
   const list = currentPesertaData.filter(p =>
     (!q  || p.nama.toLowerCase().includes(q) ||
@@ -785,7 +785,7 @@ function renderPesertaModal() {
     (!st || p.status === st)
   );
 
-  /* stats strip */
+  /* stats strip — selalu dari data asli, bukan filtered */
   const counts = { total: currentPesertaData.length, pending:0, approved:0, rejected:0, cancelled:0 };
   currentPesertaData.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
   document.getElementById('pesertaStatsStrip').innerHTML = `
@@ -795,40 +795,59 @@ function renderPesertaModal() {
     </div>
     <div class="peserta-stat">
       <div class="peserta-stat-num" style="color:#f59e0b">${counts.pending}</div>
-      <div class="peserta-stat-label">Pending</div>
+      <div class="peserta-stat-label">⏳ Pending</div>
     </div>
     <div class="peserta-stat">
       <div class="peserta-stat-num" style="color:#10b981">${counts.approved}</div>
-      <div class="peserta-stat-label">Disetujui</div>
+      <div class="peserta-stat-label">✅ Disetujui</div>
     </div>
     <div class="peserta-stat">
       <div class="peserta-stat-num" style="color:#ef4444">${counts.rejected}</div>
-      <div class="peserta-stat-label">Ditolak</div>
+      <div class="peserta-stat-label">❌ Ditolak</div>
     </div>
     <div class="peserta-stat">
       <div class="peserta-stat-num" style="color:#9ca3af">${counts.cancelled}</div>
-      <div class="peserta-stat-label">Dibatalkan</div>
+      <div class="peserta-stat-label">🚫 Dibatalkan</div>
     </div>`;
+
+  /* filter info */
+  const filterInfo = document.getElementById('pesertaFilterInfo');
+  if (filterInfo) {
+    filterInfo.textContent = (q || st)
+      ? `Menampilkan ${list.length} dari ${currentPesertaData.length} pendaftar`
+      : '';
+  }
+
+  /* footer info */
+  const footerInfo = document.getElementById('pesertaFooterInfo');
+  if (footerInfo) {
+    footerInfo.innerHTML = `Menampilkan <strong>${list.length}</strong> pendaftar`;
+  }
 
   const tb = document.getElementById('pesertaModalTable');
   if (!list.length) {
-    tb.innerHTML = '<tr><td colspan="9" class="table-empty">Tidak ada data yang sesuai filter</td></tr>';
+    tb.innerHTML = `<tr><td colspan="9" class="table-empty" style="padding:48px">
+      <div style="font-size:32px;margin-bottom:8px">🔍</div>
+      Tidak ada peserta yang sesuai dengan filter
+    </td></tr>`;
     return;
   }
 
   tb.innerHTML = list.map((p, i) => `
     <tr>
-      <td>${i + 1}</td>
+      <td style="color:var(--text-muted);font-weight:600">${i + 1}</td>
       <td>
-        <div style="font-weight:600;color:var(--text-head)">${escHtml(p.nama)}</div>
+        <div style="font-weight:700;color:var(--text-head);font-size:14px">${escHtml(p.nama)}</div>
       </td>
-      <td style="font-size:12px">${escHtml(p.email)}</td>
-      <td style="font-size:12px">${p.nik || '—'}</td>
-      <td style="font-size:12px">${p.no_hp || '—'}</td>
-      <td style="font-size:12px">${escHtml(p.instansi || '—')}</td>
-      <td style="font-size:12px;white-space:nowrap">${formatTgl(p.created_at)}</td>
+      <td style="color:#3b82f6">${escHtml(p.email)}</td>
+      <td style="font-family:monospace;font-size:13px;letter-spacing:.03em">${p.nik || '—'}</td>
+      <td>${p.no_hp || '—'}</td>
+      <td>${escHtml(p.instansi || '—')}</td>
+      <td style="white-space:nowrap;color:var(--text-muted)">${formatTgl(p.created_at)}</td>
       <td>${statusBadge(p.status, 'pendaftaran')}</td>
-      <td style="font-size:12px;color:var(--text-muted);max-width:160px">${escHtml(p.catatan_admin || '—')}</td>
+      <td style="color:var(--text-muted);font-style:${p.catatan_admin ? 'normal' : 'italic'}">
+        ${escHtml(p.catatan_admin || 'Belum ada catatan')}
+      </td>
     </tr>`).join('');
 }
 

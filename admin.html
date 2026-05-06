@@ -528,45 +528,56 @@
      MODAL DAFTAR PESERTA PER PELATIHAN
 ══════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="modalPesertaOverlay">
-  <div class="modal modal-xl">
+  <div class="modal-peserta">
+
+    <!-- Header -->
     <div class="modal-header">
       <div>
         <h3 id="modalPesertaTitle">Daftar Peserta</h3>
-        <div id="modalPesertaSub" style="font-size:12px;color:var(--text-muted);margin-top:3px"></div>
+        <div class="modal-peserta-sub" id="modalPesertaSub"></div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn-secondary" id="btnExportPeserta" style="font-size:12px;padding:6px 12px">⬇ Export CSV</button>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn-primary" id="btnExportPeserta" style="font-size:13px;padding:9px 18px;background:rgba(255,255,255,.15);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.25)">
+          ⬇ Export CSV
+        </button>
         <button class="modal-close" onclick="closeModalPeserta()">✕</button>
       </div>
     </div>
-    <div class="modal-body" style="padding:0">
+
+    <!-- Body -->
+    <div class="modal-peserta-body">
+
       <!-- Filter bar -->
-      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap">
-        <input type="text" id="searchPesertaModal" class="search-field" placeholder="Cari nama / email / instansi…" style="flex:1;min-width:200px" />
+      <div class="peserta-filter-bar">
+        <input type="text" id="searchPesertaModal" class="search-field"
+               placeholder="🔍  Cari nama, email, atau instansi…" />
         <select id="filterStatusPeserta" class="select-field">
           <option value="">Semua Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Disetujui</option>
-          <option value="rejected">Ditolak</option>
-          <option value="cancelled">Dibatalkan</option>
+          <option value="pending">⏳ Pending</option>
+          <option value="approved">✅ Disetujui</option>
+          <option value="rejected">❌ Ditolak</option>
+          <option value="cancelled">🚫 Dibatalkan</option>
         </select>
+        <span id="pesertaFilterInfo" style="font-size:13px;color:var(--text-muted);white-space:nowrap"></span>
       </div>
+
       <!-- Stats strip -->
       <div class="peserta-stats" id="pesertaStatsStrip"></div>
+
       <!-- Table -->
-      <div class="table-wrap" style="max-height:460px;overflow-y:auto">
+      <div class="peserta-table-wrap">
         <table class="table">
-          <thead style="position:sticky;top:0;z-index:1">
+          <thead>
             <tr>
-              <th>#</th>
-              <th>Nama Peserta</th>
-              <th>Email</th>
-              <th>NIK / NIP</th>
-              <th>No. HP</th>
-              <th>Instansi</th>
-              <th>Tgl Daftar</th>
-              <th>Status</th>
-              <th>Catatan Admin</th>
+              <th style="width:48px">#</th>
+              <th style="min-width:180px">Nama Peserta</th>
+              <th style="min-width:200px">Email</th>
+              <th style="min-width:150px">NIK / NIP</th>
+              <th style="min-width:130px">No. HP</th>
+              <th style="min-width:180px">Instansi / Asal</th>
+              <th style="min-width:120px">Tgl Daftar</th>
+              <th style="min-width:110px">Status</th>
+              <th style="min-width:200px">Catatan Admin</th>
             </tr>
           </thead>
           <tbody id="pesertaModalTable">
@@ -574,7 +585,15 @@
           </tbody>
         </table>
       </div>
+
+    </div><!-- /modal-peserta-body -->
+
+    <!-- Footer -->
+    <div class="modal-peserta-footer">
+      <span class="peserta-footer-info" id="pesertaFooterInfo">—</span>
+      <button class="btn-secondary" onclick="closeModalPeserta()">Tutup</button>
     </div>
+
   </div>
 </div>
 
