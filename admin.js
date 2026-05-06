@@ -54,9 +54,12 @@ function formatTgl(str) {
 }
 
 function statusBadge(s, type = 'pelatihan') {
-  const labels = type === 'pelatihan'
-    ? { open:'Dibuka', almost:'Hampir Penuh', full:'Penuh', soon:'Segera', closed:'Ditutup' }
-    : { pending:'Pending', approved:'Disetujui', rejected:'Ditolak', cancelled:'Dibatalkan' };
+  const maps = {
+    pelatihan:  { open:'Dibuka', almost:'Hampir Penuh', full:'Penuh', soon:'Segera', closed:'Ditutup' },
+    pendaftaran:{ pending:'Pending', approved:'Disetujui', rejected:'Ditolak', cancelled:'Dibatalkan' },
+    role:       { admin:'Admin', peserta:'Peserta' },
+  };
+  const labels = maps[type] || maps.pelatihan;
   return `<span class="badge badge-${s}">${labels[s] || s}</span>`;
 }
 
@@ -734,16 +737,6 @@ function dateSlug() {
 ══════════════════════════════════════════════════════════ */
 function escHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-/* Override statusBadge for role */
-const _statusBadge = statusBadge;
-function statusBadge(s, type = 'pelatihan') {
-  if (type === 'role') {
-    const labels = { admin: 'Admin', peserta: 'Peserta' };
-    return `<span class="badge badge-${s}">${labels[s] || s}</span>`;
-  }
-  return _statusBadge(s, type);
 }
 
 /* ══════════════════════════════════════════════════════════
