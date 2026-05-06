@@ -352,13 +352,14 @@
       <div class="dash-card" style="margin-top:24px">
         <div class="dash-card-header">
           <div class="dash-card-title">Ringkasan per Pelatihan</div>
+          <span style="font-size:12px;color:var(--text-muted)">Klik "Lihat Peserta" untuk detail pendaftar</span>
         </div>
         <div class="table-wrap">
           <table class="table">
             <thead>
-              <tr><th>#</th><th>Judul Pelatihan</th><th>Kategori</th><th>Kuota</th><th>Terisi</th><th>%</th><th>Pendaftar</th><th>Disetujui</th></tr>
+              <tr><th>#</th><th>Judul Pelatihan</th><th>Kategori</th><th>Kuota</th><th>Terisi</th><th>%</th><th>Pendaftar</th><th>Disetujui</th><th>Aksi</th></tr>
             </thead>
-            <tbody id="laporanTable"><tr><td colspan="8" class="table-empty">Memuat…</td></tr></tbody>
+            <tbody id="laporanTable"><tr><td colspan="9" class="table-empty">Memuat…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -518,6 +519,60 @@
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeModalDelete()">Batal</button>
         <button class="btn-danger" id="btnConfirmDelete">Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL DAFTAR PESERTA PER PELATIHAN
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalPesertaOverlay">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <h3 id="modalPesertaTitle">Daftar Peserta</h3>
+        <div id="modalPesertaSub" style="font-size:12px;color:var(--text-muted);margin-top:3px"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-secondary" id="btnExportPeserta" style="font-size:12px;padding:6px 12px">⬇ Export CSV</button>
+        <button class="modal-close" onclick="closeModalPeserta()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <!-- Filter bar -->
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap">
+        <input type="text" id="searchPesertaModal" class="search-field" placeholder="Cari nama / email / instansi…" style="flex:1;min-width:200px" />
+        <select id="filterStatusPeserta" class="select-field">
+          <option value="">Semua Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Disetujui</option>
+          <option value="rejected">Ditolak</option>
+          <option value="cancelled">Dibatalkan</option>
+        </select>
+      </div>
+      <!-- Stats strip -->
+      <div class="peserta-stats" id="pesertaStatsStrip"></div>
+      <!-- Table -->
+      <div class="table-wrap" style="max-height:460px;overflow-y:auto">
+        <table class="table">
+          <thead style="position:sticky;top:0;z-index:1">
+            <tr>
+              <th>#</th>
+              <th>Nama Peserta</th>
+              <th>Email</th>
+              <th>NIK / NIP</th>
+              <th>No. HP</th>
+              <th>Instansi</th>
+              <th>Tgl Daftar</th>
+              <th>Status</th>
+              <th>Catatan Admin</th>
+            </tr>
+          </thead>
+          <tbody id="pesertaModalTable">
+            <tr><td colspan="9" class="table-empty">Memuat…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

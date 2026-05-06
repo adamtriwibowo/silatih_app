@@ -136,6 +136,11 @@ function initApp() {
   /* Logout */
   document.getElementById('btnLogout').addEventListener('click', doLogout);
 
+  /* Modal peserta filter */
+  document.getElementById('searchPesertaModal')?.addEventListener('input',  renderPesertaModal);
+  document.getElementById('filterStatusPeserta')?.addEventListener('change', renderPesertaModal);
+  document.getElementById('btnExportPeserta')?.addEventListener('click', exportPesertaCSV);
+
   /* Password toggle on login form */
   document.querySelectorAll('.btn-toggle-pass').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -639,13 +644,13 @@ async function loadLaporan() {
     /* ─ Tabel ringkasan ─ */
     const tb = document.getElementById('laporanTable');
     tb.innerHTML = pelatihan.map((p, i) => {
-      const daftarCount    = pendaftaran.filter(d => d.pelatihan_id === p.id).length;
-      const approvedCount  = pendaftaran.filter(d => d.pelatihan_id === p.id && d.status === 'approved').length;
-      const pct            = p.kuota ? Math.round(p.kuota_terisi / p.kuota * 100) : 0;
+      const daftarCount   = pendaftaran.filter(d => d.pelatihan_id === p.id).length;
+      const approvedCount = pendaftaran.filter(d => d.pelatihan_id === p.id && d.status === 'approved').length;
+      const pct           = p.kuota ? Math.round(p.kuota_terisi / p.kuota * 100) : 0;
       return `
         <tr>
           <td>${i + 1}</td>
-          <td><strong>${p.icon || '📚'} ${p.judul}</strong></td>
+          <td><strong>${p.icon || '📚'} ${escHtml(p.judul)}</strong></td>
           <td>${p.kategori}</td>
           <td>${p.kuota}</td>
           <td>${p.kuota_terisi}</td>
@@ -657,6 +662,11 @@ async function loadLaporan() {
           </td>
           <td>${daftarCount}</td>
           <td>${approvedCount}</td>
+          <td>
+            <button class="btn-xs btn-xs-view" onclick="showPesertaPerPelatihan(${p.id}, '${escHtml(p.judul)}', '${p.icon || '📚'}')">
+              👥 Lihat Peserta
+            </button>
+          </td>
         </tr>`;
     }).join('');
 
@@ -733,6 +743,114 @@ function dateSlug() {
 }
 
 /* ══════════════════════════════════════════════════════════
+   MODAL DAFTAR PESERTA PER PELATIHAN
+══════════════════════════════════════════════════════════ */
+let currentPesertaData = [];   // cache untuk export CSV
+let currentPelatihanCtx = {};  // { id, judul, icon }
+
+async function showPesertaPerPelatihan(id, judul, icon) {
+  currentPelatihanCtx = { id, judul, icon };
+
+  document.getElementById('modalPesertaTitle').textContent  = `${icon} ${judul}`;
+  document.getElementById('modalPesertaSub').textContent    = 'Memuat data…';
+  document.getElementById('pesertaStatsStrip').innerHTML    = '';
+  document.getElementById('pesertaModalTable').innerHTML    = '<tr><td colspan="9" class="table-empty">Memuat…</td></tr>';
+  document.getElementById('searchPesertaModal').value       = '';
+  document.getElementById('filterStatusPeserta').value      = '';
+  document.getElementById('modalPesertaOverlay').classList.add('active');
+
+  try {
+    const res = await api(`/admin/pendaftaran/pelatihan/${id}`);
+    currentPesertaData = res.data.pendaftaran || [];
+
+    document.getElementById('modalPesertaSub').textContent =
+      `${res.data.pelatihan} — ${currentPesertaData.length} pendaftar`;
+
+    renderPesertaModal();
+  } catch (err) {
+    document.getElementById('pesertaModalTable').innerHTML =
+      '<tr><td colspan="9" class="table-empty">Gagal memuat data pendaftar.</td></tr>';
+    document.getElementById('modalPesertaSub').textContent = '';
+  }
+}
+
+function renderPesertaModal() {
+  const q   = (document.getElementById('searchPesertaModal')?.value  || '').toLowerCase();
+  const st  =  document.getElementById('filterStatusPeserta')?.value || '';
+
+  const list = currentPesertaData.filter(p =>
+    (!q  || p.nama.toLowerCase().includes(q) ||
+             p.email.toLowerCase().includes(q) ||
+             (p.instansi || '').toLowerCase().includes(q)) &&
+    (!st || p.status === st)
+  );
+
+  /* stats strip */
+  const counts = { total: currentPesertaData.length, pending:0, approved:0, rejected:0, cancelled:0 };
+  currentPesertaData.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
+  document.getElementById('pesertaStatsStrip').innerHTML = `
+    <div class="peserta-stat">
+      <div class="peserta-stat-num">${counts.total}</div>
+      <div class="peserta-stat-label">Total Pendaftar</div>
+    </div>
+    <div class="peserta-stat">
+      <div class="peserta-stat-num" style="color:#f59e0b">${counts.pending}</div>
+      <div class="peserta-stat-label">Pending</div>
+    </div>
+    <div class="peserta-stat">
+      <div class="peserta-stat-num" style="color:#10b981">${counts.approved}</div>
+      <div class="peserta-stat-label">Disetujui</div>
+    </div>
+    <div class="peserta-stat">
+      <div class="peserta-stat-num" style="color:#ef4444">${counts.rejected}</div>
+      <div class="peserta-stat-label">Ditolak</div>
+    </div>
+    <div class="peserta-stat">
+      <div class="peserta-stat-num" style="color:#9ca3af">${counts.cancelled}</div>
+      <div class="peserta-stat-label">Dibatalkan</div>
+    </div>`;
+
+  const tb = document.getElementById('pesertaModalTable');
+  if (!list.length) {
+    tb.innerHTML = '<tr><td colspan="9" class="table-empty">Tidak ada data yang sesuai filter</td></tr>';
+    return;
+  }
+
+  tb.innerHTML = list.map((p, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>
+        <div style="font-weight:600;color:var(--text-head)">${escHtml(p.nama)}</div>
+      </td>
+      <td style="font-size:12px">${escHtml(p.email)}</td>
+      <td style="font-size:12px">${p.nik || '—'}</td>
+      <td style="font-size:12px">${p.no_hp || '—'}</td>
+      <td style="font-size:12px">${escHtml(p.instansi || '—')}</td>
+      <td style="font-size:12px;white-space:nowrap">${formatTgl(p.created_at)}</td>
+      <td>${statusBadge(p.status, 'pendaftaran')}</td>
+      <td style="font-size:12px;color:var(--text-muted);max-width:160px">${escHtml(p.catatan_admin || '—')}</td>
+    </tr>`).join('');
+}
+
+function closeModalPeserta() {
+  document.getElementById('modalPesertaOverlay').classList.remove('active');
+  currentPesertaData  = [];
+  currentPelatihanCtx = {};
+}
+
+function exportPesertaCSV() {
+  if (!currentPesertaData.length) { toast('Tidak ada data untuk diekspor.', 'error'); return; }
+  const headers = ['No','Nama','Email','NIK/NIP','No HP','Instansi','Tgl Daftar','Status','Catatan Admin'];
+  const rows    = currentPesertaData.map((p, i) => [
+    i + 1, p.nama, p.email, p.nik || '', p.no_hp || '',
+    p.instansi || '', formatTgl(p.created_at), p.status, p.catatan_admin || '',
+  ]);
+  const slug = currentPelatihanCtx.judul?.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30) || 'pelatihan';
+  downloadCSV(`peserta_${slug}_${dateSlug()}.csv`, [headers, ...rows]);
+  toast('File CSV berhasil diunduh.');
+}
+
+/* ══════════════════════════════════════════════════════════
    UTILITIES
 ══════════════════════════════════════════════════════════ */
 function escHtml(str) {
@@ -759,15 +877,17 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalPelatihan();
     closeModalStatus();
     closeModalDelete();
+    closeModalPeserta();
   });
 
   /* Overlay click closes modal */
-  ['modalPelatihanOverlay','modalStatusOverlay','modalDeleteOverlay'].forEach(id => {
+  ['modalPelatihanOverlay','modalStatusOverlay','modalDeleteOverlay','modalPesertaOverlay'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', function (e) {
       if (e.target === this) {
         closeModalPelatihan();
         closeModalStatus();
         closeModalDelete();
+        closeModalPeserta();
       }
     });
   });
