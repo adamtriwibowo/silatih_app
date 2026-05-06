@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — SiLatih</title>
+  <link rel="stylesheet" href="admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     LOGIN OVERLAY
+══════════════════════════════════════════════════════ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">⚙️</div>
+      <div>
+        <div class="login-logo-title">SiLatih</div>
+        <div class="login-logo-sub">Admin Dashboard</div>
+      </div>
+    </div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Email Admin</label>
+        <input type="email" id="lEmail" placeholder="admin@silatih.go.id" required autocomplete="email" />
+        <span class="form-error" id="lErrEmail"></span>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-pass-wrap">
+          <input type="password" id="lPassword" placeholder="••••••••" required autocomplete="current-password" />
+          <button type="button" class="btn-toggle-pass" data-target="lPassword">👁</button>
+        </div>
+        <span class="form-error" id="lErrGeneral"></span>
+      </div>
+      <button type="submit" class="btn-login" id="btnLoginSubmit">Masuk ke Dashboard</button>
+    </form>
+    <p class="login-back"><a href="index.html">← Kembali ke halaman utama</a></p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     ADMIN APP
+══════════════════════════════════════════════════════ -->
+<div class="admin-app" id="adminApp" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-icon">⚙️</span>
+      <div>
+        <div class="sidebar-brand-title">SiLatih</div>
+        <div class="sidebar-brand-sub">Admin Panel</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-page="dashboard" href="#">
+        <span class="nav-icon">📊</span><span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-page="pelatihan" href="#">
+        <span class="nav-icon">📚</span><span>Pelatihan</span>
+      </a>
+      <a class="nav-item" data-page="pendaftaran" href="#">
+        <span class="nav-icon">📝</span><span>Pendaftaran</span>
+        <span class="nav-badge" id="badgePending" style="display:none">0</span>
+      </a>
+      <a class="nav-item" data-page="users" href="#">
+        <span class="nav-icon">👥</span><span>Pengguna</span>
+      </a>
+      <a class="nav-item" data-page="laporan" href="#">
+        <span class="nav-icon">📈</span><span>Laporan</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebarName">Admin</div>
+          <div class="sidebar-user-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout-side" id="btnLogout">Keluar</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOP HEADER -->
+    <header class="top-header">
+      <button class="btn-menu-toggle" id="btnMenuToggle">☰</button>
+      <div class="header-breadcrumb" id="headerBreadcrumb">Dashboard</div>
+      <div class="header-actions">
+        <span class="header-date" id="headerDate"></span>
+        <a href="index.html" class="btn-view-site" target="_blank">Lihat Situs →</a>
+      </div>
+    </header>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ── PAGE: DASHBOARD ── -->
+    <section class="page active" id="pageDashboard">
+      <div class="page-title">Selamat datang, <span id="greetName">Admin</span> 👋</div>
+      <div class="page-sub">Ringkasan aktivitas Sistem Pelatihan Digital</div>
+
+      <!-- Stats row -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card stat-purple">
+          <div class="stat-icon">📚</div>
+          <div class="stat-body">
+            <div class="stat-num" id="dTotalPelatihan">—</div>
+            <div class="stat-label">Total Pelatihan</div>
+          </div>
+        </div>
+        <div class="stat-card stat-blue">
+          <div class="stat-icon">👥</div>
+          <div class="stat-body">
+            <div class="stat-num" id="dTotalPeserta">—</div>
+            <div class="stat-label">Total Peserta Terdaftar</div>
+          </div>
+        </div>
+        <div class="stat-card stat-yellow">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-body">
+            <div class="stat-num" id="dPending">—</div>
+            <div class="stat-label">Pendaftaran Pending</div>
+          </div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-icon">✅</div>
+          <div class="stat-body">
+            <div class="stat-num" id="dApproved">—</div>
+            <div class="stat-label">Disetujui</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second row: charts + recent -->
+      <div class="dash-grid">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title">Status Pelatihan</div>
+          </div>
+          <div class="chart-wrap-sm">
+            <canvas id="chartStatusPelatihan"></canvas>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title">Status Pendaftaran</div>
+          </div>
+          <div class="chart-wrap-sm">
+            <canvas id="chartStatusPendaftaran"></canvas>
+          </div>
+        </div>
+        <div class="dash-card dash-card-full">
+          <div class="dash-card-header">
+            <div class="dash-card-title">Pendaftaran Terbaru</div>
+            <button class="btn-text" onclick="goPage('pendaftaran')">Lihat semua →</button>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>#</th><th>Peserta</th><th>Pelatihan</th><th>Waktu</th><th>Status</th></tr>
+            </thead>
+            <tbody id="recentTable"><tr><td colspan="5" class="table-empty">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PAGE: PELATIHAN ── -->
+    <section class="page" id="pagePelatihan">
+      <div class="page-header-row">
+        <div>
+          <div class="page-title">Manajemen Pelatihan</div>
+          <div class="page-sub" id="pelatihanSub">— pelatihan</div>
+        </div>
+        <button class="btn-primary" onclick="openModalPelatihan()">+ Tambah Pelatihan</button>
+      </div>
+      <div class="filter-row">
+        <input type="text" class="search-field" id="searchPelatihan" placeholder="Cari judul…" />
+        <select class="select-field" id="fpKategori">
+          <option value="">Semua Kategori</option>
+          <option value="teknologi">Teknologi</option>
+          <option value="bisnis">Bisnis</option>
+          <option value="desain">Desain</option>
+          <option value="data">Data</option>
+          <option value="softskill">Soft Skill</option>
+        </select>
+        <select class="select-field" id="fpStatus">
+          <option value="">Semua Status</option>
+          <option value="open">Dibuka</option>
+          <option value="almost">Hampir Penuh</option>
+          <option value="full">Penuh</option>
+          <option value="soon">Segera Dibuka</option>
+          <option value="closed">Ditutup</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>#</th><th>Judul</th><th>Kategori</th><th>Jadwal</th><th>Kuota</th><th>Mode</th><th>Status</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="pelatihanTable"><tr><td colspan="8" class="table-empty">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── PAGE: PENDAFTARAN ── -->
+    <section class="page" id="pagePendaftaran">
+      <div class="page-header-row">
+        <div>
+          <div class="page-title">Manajemen Pendaftaran</div>
+          <div class="page-sub" id="pendaftaranSub">— pendaftaran</div>
+        </div>
+        <button class="btn-secondary" onclick="exportPendaftaranCSV()">⬇ Export CSV</button>
+      </div>
+      <div class="filter-row">
+        <input type="text" class="search-field" id="searchPendaftaran" placeholder="Cari nama / pelatihan…" />
+        <select class="select-field" id="fdStatus">
+          <option value="">Semua Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Disetujui</option>
+          <option value="rejected">Ditolak</option>
+          <option value="cancelled">Dibatalkan</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>#</th><th>Peserta</th><th>Pelatihan</th><th>Instansi</th><th>Tanggal Daftar</th><th>Status</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="pendaftaranTable"><tr><td colspan="7" class="table-empty">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── PAGE: USERS ── -->
+    <section class="page" id="pageUsers">
+      <div class="page-header-row">
+        <div>
+          <div class="page-title">Data Pengguna</div>
+          <div class="page-sub" id="usersSub">— pengguna</div>
+        </div>
+        <button class="btn-secondary" onclick="exportUsersCSV()">⬇ Export CSV</button>
+      </div>
+      <div class="filter-row">
+        <input type="text" class="search-field" id="searchUsers" placeholder="Cari nama / email…" />
+        <select class="select-field" id="fuRole">
+          <option value="">Semua Role</option>
+          <option value="peserta">Peserta</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>#</th><th>Nama</th><th>Email</th><th>NIK/NIP</th><th>No. HP</th><th>Instansi</th><th>Role</th><th>Bergabung</th></tr>
+          </thead>
+          <tbody id="usersTable"><tr><td colspan="8" class="table-empty">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── PAGE: LAPORAN ── -->
+    <section class="page" id="pageLaporan">
+      <div class="page-header-row">
+        <div>
+          <div class="page-title">Laporan & Statistik</div>
+          <div class="page-sub">Analisis data pelatihan dan pendaftaran</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-secondary" onclick="window.print()">🖨 Cetak</button>
+          <button class="btn-primary" onclick="exportLaporanCSV()">⬇ Export Laporan</button>
+        </div>
+      </div>
+
+      <!-- Laporan Stats -->
+      <div class="stats-row">
+        <div class="stat-card stat-purple">
+          <div class="stat-icon">📚</div>
+          <div class="stat-body">
+            <div class="stat-num" id="lTotalPelatihan">—</div>
+            <div class="stat-label">Total Pelatihan</div>
+          </div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-icon">✅</div>
+          <div class="stat-body">
+            <div class="stat-num" id="lApprovedRate">—%</div>
+            <div class="stat-label">Tingkat Penerimaan</div>
+          </div>
+        </div>
+        <div class="stat-card stat-blue">
+          <div class="stat-icon">📋</div>
+          <div class="stat-body">
+            <div class="stat-num" id="lTotalPendaftaran">—</div>
+            <div class="stat-label">Total Pendaftaran</div>
+          </div>
+        </div>
+        <div class="stat-card stat-yellow">
+          <div class="stat-icon">📊</div>
+          <div class="stat-body">
+            <div class="stat-num" id="lAvgKuota">—%</div>
+            <div class="stat-label">Rata-rata Ketersediaan Kuota</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="chart-grid">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title">Pendaftaran per Pelatihan</div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chartPendaftaranPerPelatihan"></canvas>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title">Distribusi Kategori Pelatihan</div>
+          </div>
+          <div class="chart-wrap-sm">
+            <canvas id="chartKategori"></canvas>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title">Status Pendaftaran</div>
+          </div>
+          <div class="chart-wrap-sm">
+            <canvas id="chartLaporanStatus"></canvas>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title">Tingkat Pengisian Kuota per Pelatihan</div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chartKuota"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabel Ringkasan -->
+      <div class="dash-card" style="margin-top:24px">
+        <div class="dash-card-header">
+          <div class="dash-card-title">Ringkasan per Pelatihan</div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>#</th><th>Judul Pelatihan</th><th>Kategori</th><th>Kuota</th><th>Terisi</th><th>%</th><th>Pendaftar</th><th>Disetujui</th></tr>
+            </thead>
+            <tbody id="laporanTable"><tr><td colspan="8" class="table-empty">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /main-content -->
+</div><!-- /admin-app -->
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL PELATIHAN (Tambah / Edit)
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalPelatihanOverlay">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="modalPelatihanTitle">Tambah Pelatihan</h3>
+      <button class="modal-close" onclick="closeModalPelatihan()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="formPelatihan">
+        <input type="hidden" id="pId" />
+        <div class="form-grid">
+          <div class="form-group fg-full">
+            <label>Judul Pelatihan *</label>
+            <input type="text" id="pJudul" placeholder="Judul lengkap pelatihan" required />
+          </div>
+          <div class="form-group">
+            <label>Kategori *</label>
+            <select id="pKategori" required>
+              <option value="">Pilih kategori</option>
+              <option value="teknologi">Teknologi</option>
+              <option value="bisnis">Bisnis</option>
+              <option value="desain">Desain</option>
+              <option value="data">Data</option>
+              <option value="softskill">Soft Skill</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Mode *</label>
+            <select id="pMode" required>
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+              <option value="hybrid">Hybrid</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Jadwal *</label>
+            <input type="date" id="pJadwal" required />
+          </div>
+          <div class="form-group">
+            <label>Durasi</label>
+            <input type="text" id="pDurasi" placeholder="cth: 40 Jam (8 Pertemuan)" />
+          </div>
+          <div class="form-group fg-full">
+            <label>Lokasi</label>
+            <input type="text" id="pLokasi" placeholder="cth: Zoom Meeting / Gedung A Lt.3" />
+          </div>
+          <div class="form-group">
+            <label>Biaya</label>
+            <input type="text" id="pBiaya" placeholder="Gratis / Rp 200.000" />
+          </div>
+          <div class="form-group">
+            <label>Kuota *</label>
+            <input type="number" id="pKuota" min="1" placeholder="30" required />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="pStatus">
+              <option value="soon">Segera Dibuka</option>
+              <option value="open">Dibuka</option>
+              <option value="almost">Hampir Penuh</option>
+              <option value="full">Penuh</option>
+              <option value="closed">Ditutup</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Icon (emoji)</label>
+            <input type="text" id="pIcon" placeholder="💻" maxlength="4" />
+          </div>
+          <div class="form-group fg-full">
+            <label>Nama Instruktur *</label>
+            <input type="text" id="pInstrukturNama" placeholder="Dr. Budi Santoso" required />
+          </div>
+          <div class="form-group">
+            <label>Jabatan Instruktur</label>
+            <input type="text" id="pInstrukturJabatan" placeholder="Senior Software Engineer" />
+          </div>
+          <div class="form-group">
+            <label>Warna Instruktur</label>
+            <input type="color" id="pInstrukturWarna" value="#7c3aed" />
+          </div>
+          <div class="form-group fg-full">
+            <label>Tags (pisah dengan koma)</label>
+            <input type="text" id="pTags" placeholder="React, Node.js, MongoDB" />
+          </div>
+          <div class="form-group fg-full">
+            <label>Gradient (CSS)</label>
+            <input type="text" id="pGradient" placeholder="linear-gradient(135deg,#7c3aed,#3b82f6)" />
+          </div>
+          <div class="form-group fg-full">
+            <label>Deskripsi</label>
+            <textarea id="pDeskripsi" rows="4" placeholder="Deskripsi singkat pelatihan…"></textarea>
+          </div>
+        </div>
+        <div class="form-error" id="pErr" style="margin-top:8px"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeModalPelatihan()">Batal</button>
+          <button type="submit" class="btn-primary" id="btnSavePelatihan">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL UPDATE STATUS PENDAFTARAN
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalStatusOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Update Status Pendaftaran</h3>
+      <button class="modal-close" onclick="closeModalStatus()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box" id="statusInfoBox"></div>
+      <div class="form-group" style="margin-top:16px">
+        <label>Status *</label>
+        <select id="sStatus">
+          <option value="pending">Pending</option>
+          <option value="approved">Disetujui</option>
+          <option value="rejected">Ditolak</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Catatan Admin (opsional)</label>
+        <textarea id="sCatatan" rows="3" placeholder="Catatan untuk peserta…"></textarea>
+      </div>
+      <div class="form-error" id="sErr"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModalStatus()">Batal</button>
+        <button class="btn-primary" id="btnSaveStatus" onclick="submitUpdateStatus()">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL KONFIRMASI HAPUS
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalDeleteOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3>Konfirmasi Hapus</h3>
+      <button class="modal-close" onclick="closeModalDelete()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="deleteMsg" style="color:var(--text-body);margin-bottom:20px"></p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModalDelete()">Batal</button>
+        <button class="btn-danger" id="btnConfirmDelete">Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
